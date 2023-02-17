@@ -3,9 +3,9 @@ FROM python
 
 WORKDIR /app
 
-COPY --from=0 /app/cqhttp ./go-cqhttp
-
 COPY ./ .
+
+COPY --from=0 /app/cqhttp ./go-cqhttp
 
 RUN pip install -r requirements.txt
 

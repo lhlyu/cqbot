@@ -232,7 +232,7 @@ class EventNotice(EventPost):
     duration: int | None
     # 文件信息
     # 文档: https://docs.go-cqhttp.org/event/#%E7%BE%A4%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0
-    file: dict[str, Any]
+    file: dict[str, Any] | None
     # 发送者 QQ 号
     sender_id: int | None
     # 戳一戳（双击头像）[notice_type = notify, sub_type = poke] 被戳者
@@ -282,7 +282,7 @@ class EventMetaEvent(EventPost):
     meta_event_type: PostMetaEventType
     # 下面属性非通用数据
     # 应用程序状态
-    status: dict[str, Any]
+    status: dict[str, Any] | None
     # 距离上一次心跳包的时间(单位是毫秒)
     interval: int | None
     # 生命周期子类型: enable, disable, connect
