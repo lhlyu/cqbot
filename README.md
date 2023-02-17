@@ -28,6 +28,7 @@ go-cqhttp需要去[releases](https://github.com/Mrs4s/go-cqhttp/releases)下载�
 - [config.yml配置](https://docs.go-cqhttp.org/guide/config.html#%E9%85%8D%E7%BD%AE%E4%BF%A1%E6%81%AF)
 - [支持的事件](https://docs.go-cqhttp.org/event)
 - [支持的API](https://docs.go-cqhttp.org/api)
+- [支持的CQ码](https://docs.go-cqhttp.org/cqcode)
 
 ## [例子](./examples)
 
@@ -39,6 +40,7 @@ from cqbot import *
 # pip install addict
 from addict import Dict
 
+
 def to_json(obj: object):
     return json.dumps(obj.__dict__, default=lambda o: o.__dict__, ensure_ascii=False)
 
@@ -46,13 +48,20 @@ def to_json(obj: object):
 def on_message_group(act: Action, msg: EventMessage):
     # 打印消息体
     print('on_message_group:', to_json(msg))
-    # 将用户的消息用bot发一遍
-    act.send_group_msg(msg.group_id, msg.message)
+    # 判断当前的消息是否at了机器人
+    if msg.is_at():
+        # 回复这条消息
+        message = f'{CQ.at(msg.user_id)} 好的{CQ.face(124)}'
+        act.send_group_msg(msg.group_id, message)
+        # 再发送一条文字转语音
+        message = f'{CQ.tts("人类的赞歌是勇气的赞歌，人类的伟大是勇气的伟大。")}'
+        act.send_group_msg(msg.group_id, message)
+        return
 
 
 def on_notice_group_recall(act: Action, msg: EventNotice):
     # 如果是撤回机器人的消息则不处理
-    if msg.bot_id == msg.user_id:
+    if msg.self_id == msg.user_id:
         return
     print('on_notice_group_recall:', to_json(msg))
     # 获取被撤回的消息
@@ -61,7 +70,7 @@ def on_notice_group_recall(act: Action, msg: EventNotice):
         return
     m = Dict(recall_msg)
     # 将撤回的消息重新发回群里
-    message = f'[CQ:at,qq={m.data.sender.user_id}]撤回了一条消息: {m.data.message}'
+    message = f'{CQ.at(m.data.sender.user_id)}撤回了一条消息: {m.data.message}'
     act.send_group_msg(msg.group_id, message)
 
 
@@ -72,6 +81,7 @@ if __name__ == '__main__':
     # 处理群消息撤回
     bot.on_notice_group_recall = on_notice_group_recall
     bot.run()
+
 ```
 
 ### 第二种方式
@@ -94,13 +104,20 @@ class MyBot(Bot):
     def on_message_group(self, act: Action, msg: EventMessage):
         # 打印消息体
         print('on_message_group:', to_json(msg))
-        # 将用户的消息用bot发一遍
-        act.send_group_msg(msg.group_id, msg.message)
+        # 判断当前的消息是否at了机器人
+        if msg.is_at():
+            # 回复这条消息
+            message = f'{CQ.at(msg.user_id)} 好的{CQ.face(124)}'
+            act.send_group_msg(msg.group_id, message)
+            # 再发送一条文字转语音
+            message = f'{CQ.tts("人类的赞歌是勇气的赞歌，人类的伟大是勇气的伟大。")}'
+            act.send_group_msg(msg.group_id, message)
+            return
 
     # 群消息撤回处理
     def on_notice_group_recall(self, act: Action, msg: EventNotice):
         # 如果是撤回机器人的消息则不处理
-        if msg.bot_id == msg.user_id:
+        if msg.self_id == msg.user_id:
             return
         print('on_notice_group_recall:', to_json(msg))
         # 获取被撤回的消息
@@ -109,7 +126,7 @@ class MyBot(Bot):
             return
         m = Dict(recall_msg)
         # 将撤回的消息重新发回群里
-        message = f'[CQ:at,qq={m.data.sender.user_id}]撤回了一条消息: {m.data.message}'
+        message = f'{CQ.at(m.data.sender.user_id)}撤回了一条消息: {m.data.message}'
         act.send_group_msg(msg.group_id, message)
 
 
@@ -119,12 +136,33 @@ if __name__ == '__main__':
 
 ```
 
-## CQ码正则
+### 直接使用Api
 
-- 匹配：at某人
+当`go-cqhttp`启动后可以直接使用`Action`方法
 
+```python
+# pip install cqbot
+from cqbot import *
+
+
+if __name__ == '__main__':
+    # 连接go-cqhttp暴露的http
+    act = Action('0.0.0.0:8000')
+    # 直接指定群号发送消息
+    act.send_group_msg(123, f'你好{CQ.face(78)}')
 ```
-\[CQ:at,qq=123(,[a-z]+\=\S+)*\]
-```
 
+### CQ码使用
+
+```python
+# pip install cqbot
+from cqbot import *
+
+if __name__ == '__main__':
+    # 输出: [CQ:at,qq=12313]
+    print(CQ.at(12313))
+    # 输出: [CQ:face,id=12]
+    print(CQ.face(12))
+    
+```
 

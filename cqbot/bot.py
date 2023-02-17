@@ -1,13 +1,12 @@
+import json
 import os
 import platform
 import subprocess
 import time
-import yaml
-import json
-import websocket
 from typing import Callable
+import websocket
+import yaml
 from .event import *
-from .action import *
 
 CONFIG_FILE = "./config.yml"
 LOG_FORMAT = "[%(asctime)s]-[%(levelname)s]: %(message)s"
@@ -15,6 +14,8 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 class Bot(Event):
+
+    version: str = '0.0.2'
 
     def __init__(self, loglevel: int = logging.INFO, path: str = './'):
         """
@@ -139,6 +140,7 @@ class Bot(Event):
             logging.info("websocket连接关闭")
 
         def on_open(ws):
+            logging.info("cqbot当前版本: " + self.version)
             logging.info("websocket连接建立成功")
 
         ws = websocket.WebSocketApp(

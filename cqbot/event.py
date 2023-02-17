@@ -1,4 +1,4 @@
-from .enum import *
+import re
 from .action import *
 
 
@@ -6,39 +6,17 @@ class EventPost(object):
     """
     事件上报有效通用数据
     """
-    # 原始数据
-    __data: dict[str, Any]
     # 事件发生的unix时间戳
     time: int
     # 收到事件的机器人的 QQ 号
     self_id: int
     # 表示该上报的类型, 消息, 消息发送, 请求, 通知, 或元事件
     post_type: PostType
-    # bot的qq号
-    bot_id: int
 
     def __init__(self, message_data: dict[str, Any]):
-        self.__data = message_data
         self.time = int(message_data['time'])
         self.self_id = int(message_data['self_id'])
         self.post_type = PostType(message_data['post_type'])
-        self.bot_id = message_data.get('self_id', 0)
-
-    def get(self, key: str, default: Any = None) -> Any:
-        """
-        从原始数据中提取数据
-        :param key:
-        :param default:
-        :return:
-        """
-        return self.__data.get(key, default)
-
-    def get_data(self) -> dict[str, Any]:
-        """
-        返回原始数据
-        :return:
-        """
-        return self.__data
 
 
 class PostMessageMessageSender:
@@ -128,6 +106,8 @@ class EventMessage(EventPost):
     # 发送者信息
     sender: PostMessageMessageSender
     # 下面属性非通用数据
+    # 消息序号
+    message_seq: int | None
     # 临时对话的来源
     temp_source: PostMessageTempSource | None
     # 群ID
@@ -146,6 +126,7 @@ class EventMessage(EventPost):
         self.message = message_data['message']
         self.sender = PostMessageMessageSender(message_data['sender'])
 
+        self.message_seq = message_data.get('message_seq', None)
         if self.message_type == PostMessageType.PRIVATE:
             temp_source = message_data.get('temp_source', None)
             if temp_source is not None:
@@ -155,6 +136,21 @@ class EventMessage(EventPost):
             anonymous = message_data.get('anonymous', None)
             if anonymous is not None:
                 self.anonymous = Anonymous(anonymous)
+
+    def is_at(self, qq: int | str = 0) -> bool:
+        """
+        某人是否被提及，默认是当前机器人
+        :param qq: 查看指定QQ号是否被提及，或则all查看是不是提及了所有人，默认是查看当前机器人qq是否被提及
+        :return:
+        """
+        if qq == 0:
+            qq = self.self_id
+
+        rule = rf'(\[CQ:at,qq\={qq}(,[a-z]+\=\S+)*\])'
+        result = re.findall(rule, self.message)
+        if len(result) == 0:
+            return False
+        return True
 
 
 class EventRequest(EventPost):
