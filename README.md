@@ -147,7 +147,7 @@ from cqbot import *
 
 if __name__ == '__main__':
     # 连接go-cqhttp暴露的http
-    act = Action('0.0.0.0:8000')
+    act = Action('http://0.0.0.0:8000')
     # 直接指定群号发送消息
     act.send_group_msg(123, f'你好{CQ.face(78)}')
 ```
