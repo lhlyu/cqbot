@@ -1,5 +1,7 @@
 import re
+from typing import Any
 from .action import *
+from .enum import *
 
 
 class EventPost(object):
@@ -82,6 +84,76 @@ class Anonymous:
         self.flag = anonymous.get('flag', '')
 
 
+office_bots = [
+    # q群管家
+    2854196310,
+    # 热议小助手
+    2854209495,
+    # 小冰
+    2854196306,
+    # 占卜师喵吉
+    2854196318,
+    # 暗区突围老皮
+    2854203945,
+    # 小YOYO
+    2854203763,
+    # 清安
+    2854200554,
+    # 小世界情报菌
+    2854200454,
+    # 玄中记卷卷
+    2854214686,
+    # 卧龙吟2乔妹
+    2854211316,
+    # 赞噢机器人
+    2854204259,
+    # QQ官方
+    2854196320,
+    # QQ小店助手
+    2854196925,
+    # Eva-创造恋人
+    2854205672,
+    # 小微欢乐多
+    2854196324,
+    # 表情包老铁
+    2854196312,
+    # 王者荣耀小狐狸
+    2854196311,
+    # 看点直播小助理
+    2854215747,
+    # DNF小酱油
+    2854214473,
+    # 英雄联盟 撸妹儿
+    2854209507,
+    # CODM-瘦普
+    2854214941,
+    # 火影忍者-豚豚
+    2854211389,
+    # 梦想新大陆-鲁鲁
+    2854198999,
+    # 黎明觉醒秀研
+    2854216101,
+    # 和平精英-小几
+    2854196316,
+    # 蒸汽机器人
+    2854213468,
+    # 奇迹Angela
+    2854206897,
+    # 小森村百科
+    2854214963,
+    # 饭团团
+    2854211892,
+    # 小莹机器人
+    2854213893,
+    # 阿暖
+    2854202380,
+    # 腾讯灯塔
+    2854200812,
+    # 蓝鲸信息流
+    2854200449,
+]
+
+
 class EventMessage(EventPost):
     """
     post_type 为 message 或 message_sent 的上报将会有以下有效通用数据
@@ -151,6 +223,15 @@ class EventMessage(EventPost):
         if len(result) == 0:
             return False
         return True
+
+    def is_office_bot(self, qq: int = 0) -> bool:
+        """
+        当前消息是否是官方机器人发送的，也可以指定QQ查看是否是官方机器人
+        :return:
+        """
+        if qq == 0:
+            qq = self.user_id
+        return qq in office_bots
 
 
 class EventRequest(EventPost):
@@ -544,3 +625,15 @@ class Event:
         :return:
         """
         pass
+
+
+__all__ = [
+    'EventPost',
+    'PostMessageMessageSender',
+    'Anonymous',
+    'EventMessage',
+    'EventRequest',
+    'EventNotice',
+    'EventMetaEvent',
+    'Event',
+]

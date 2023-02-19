@@ -20,7 +20,7 @@ go-cqhttp需要去[releases](https://github.com/Mrs4s/go-cqhttp/releases)下载�
 ├── mybot - 项目目录
 │   ├── bot.py - 机器人逻辑文件
 │   ├── config.yml - go-cqhttp配置文件，根据自己的要求修改
-│   ├── go-cqhttp - go-cqhttp执行文件，window下是exe结尾的文件
+│   ├── go-cqhttp - go-cqhttp执行文件，window下是exe结尾的文件， 如果使用docker构建不需要这个文件
 │   ├── Dockerfile - 构建镜像的文件
 │   ├── run.sh - 脚本构建镜像并创建容器运行
 ```
@@ -36,18 +36,63 @@ go-cqhttp需要去[releases](https://github.com/Mrs4s/go-cqhttp/releases)下载�
 
 ```python
 # pip install cqbot
-from cqbot import *
+import json
+from typing import List, Any
+
 # pip install addict
 from addict import Dict
+
+# pip install cqbot
+from cqbot import *
 
 
 def to_json(obj: object):
     return json.dumps(obj.__dict__, default=lambda o: o.__dict__, ensure_ascii=False)
 
 
+on = True
+
+
+def cmd_enable(act: Action, msg: EventMessage, args: List[Any]) -> bool:
+    global on
+    on = True
+    act.send_group_msg(msg.group_id, "已启动！")
+    return True
+
+
+def cmd_stop(act: Action, msg: EventMessage, args: List[Any]) -> bool:
+    global on
+    on = False
+    act.send_group_msg(msg.group_id, "已停止！")
+    return True
+
+
+def cmd_test(act: Action, msg: EventMessage, args: List[Any]) -> bool:
+    if len(args) == 0:
+        # 当没有参数的时候打印帮助
+        act.send_group_msg(msg.group_id, cmd.help())
+        return
+    # 将参数原样发回
+    act.send_group_msg(msg.group_id, ' '.join(args))
+    return True
+
+
+# 设置指令
+cmd = Cmd()
+cmd.add('#启动', '启动程序', cmd_enable)
+cmd.add('#停止', '停止程序', cmd_stop)
+cmd.add('#测试', '#测试 你的内容', cmd_test)
+
+
 def on_message_group(act: Action, msg: EventMessage):
     # 打印消息体
     print('on_message_group:', to_json(msg))
+    # 如果是官方机器人则不处理
+    if msg.is_office_bot():
+        return
+    # 执行指令
+    if cmd.run(act, msg):
+        return
     # 判断当前的消息是否at了机器人
     if msg.is_at():
         # 回复这条消息
@@ -81,20 +126,57 @@ if __name__ == '__main__':
     # 处理群消息撤回
     bot.on_notice_group_recall = on_notice_group_recall
     bot.run()
-
 ```
 
 ### 第二种方式
 
 ```python
-# pip install cqbot
-from cqbot import *
+import json
+from typing import List, Any
+
 # pip install addict
 from addict import Dict
+
+# pip install cqbot
+from cqbot import *
 
 
 def to_json(obj: object):
     return json.dumps(obj.__dict__, default=lambda o: o.__dict__, ensure_ascii=False)
+
+
+on = True
+
+
+def cmd_enable(act: Action, msg: EventMessage, args: List[Any]) -> bool:
+    global on
+    on = True
+    act.send_group_msg(msg.group_id, "已启动！")
+    return True
+
+
+def cmd_stop(act: Action, msg: EventMessage, args: List[Any]) -> bool:
+    global on
+    on = False
+    act.send_group_msg(msg.group_id, "已停止！")
+    return True
+
+
+def cmd_test(act: Action, msg: EventMessage, args: List[Any]) -> bool:
+    if len(args) == 0:
+        # 当没有参数的时候打印帮助
+        act.send_group_msg(msg.group_id, cmd.help())
+        return
+    # 将参数原样发回
+    act.send_group_msg(msg.group_id, ' '.join(args))
+    return True
+
+
+# 设置指令
+cmd = Cmd()
+cmd.add('#启动', '启动程序', cmd_enable)
+cmd.add('#停止', '停止程序', cmd_stop)
+cmd.add('#测试', '#测试 你的内容', cmd_test)
 
 
 # 自定义一个Bot,继承Bot,重写需要处理的事件
@@ -104,6 +186,12 @@ class MyBot(Bot):
     def on_message_group(self, act: Action, msg: EventMessage):
         # 打印消息体
         print('on_message_group:', to_json(msg))
+        # 如果是官方机器人则不处理
+        if msg.is_office_bot():
+            return
+        # 执行指令
+        if cmd.run(act, msg):
+            return
         # 判断当前的消息是否at了机器人
         if msg.is_at():
             # 回复这条消息
@@ -133,7 +221,6 @@ class MyBot(Bot):
 if __name__ == '__main__':
     bot = MyBot()
     bot.run()
-
 ```
 
 ### 直接使用Api
@@ -166,3 +253,34 @@ if __name__ == '__main__':
     
 ```
 
+### 指令使用
+
+```python
+from typing import List, Any
+from cqbot import *
+
+def cmd_test(act: Action, msg: EventMessage, args: List[Any]) -> bool:
+    if len(args) == 0:
+        act.send_group_msg(msg.group_id, cmd.help())
+        return
+    act.send_group_msg(msg.group_id, ' '.join(args))
+    return True
+
+
+# 设置指令
+cmd = Cmd()
+cmd.add('#测试1', '#测试 你的内容', cmd_test)
+cmd.add('#测试2', '#测试 你的内容', cmd_test)
+
+
+# 监听群消息
+def on_message_group(act: Action, msg: EventMessage):
+    # 执行指令
+    cmd.run(act, msg)
+```
+
+## 一些问题
+
+- 在服务器上部署后不好登录，或则提示账号设备不安全
+
+> 可以在本地登录好，将 `session.token` `device.json` 一同上传到服务器，免去了登录的烦恼

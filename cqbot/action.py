@@ -1036,3 +1036,6 @@ class Action:
             'messages': messages,
         }
         return self.do_post(uri, payload)
+
+
+__all__ = ['Action']

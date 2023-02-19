@@ -358,3 +358,6 @@ class CQ:
             return ''
 
         return f'[CQ:tts,text={text}]'
+
+
+__all__ = ['CQ']

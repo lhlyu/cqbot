@@ -1,12 +1,15 @@
 import json
+import logging
 import os
 import platform
 import subprocess
 import time
-from typing import Callable
+from typing import Callable, Any
 import websocket
 import yaml
 from .event import *
+from .enum import *
+from .action import *
 
 CONFIG_FILE = "./config.yml"
 LOG_FORMAT = "[%(asctime)s]-[%(levelname)s]: %(message)s"
@@ -15,7 +18,7 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class Bot(Event):
 
-    version: str = '0.0.2'
+    version: str = '0.0.3'
 
     def __init__(self, loglevel: int = logging.INFO, path: str = './'):
         """
@@ -252,3 +255,6 @@ class Bot(Event):
             if fn is None:
                 return
             fn(self.__action, msg)
+
+
+__all__ = ['Bot']
