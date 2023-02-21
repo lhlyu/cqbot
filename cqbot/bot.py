@@ -4,9 +4,10 @@ import os
 import platform
 import subprocess
 import time
-from typing import Callable, Any
 import websocket
 import yaml
+from typing import Callable, Any
+from threading import Thread
 from .event import *
 from .enum import *
 from .action import *
@@ -17,8 +18,7 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 class Bot(Event):
-
-    version: str = '0.0.3'
+    version: str = '0.0.4'
 
     def __init__(self, loglevel: int = logging.INFO, path: str = './'):
         """
@@ -27,6 +27,8 @@ class Bot(Event):
         :param path: config.yml 和 go-cqhttp 所在目录，这两个东西必须放在一起
         """
         super().__init__()
+        # go-cqhttp 是否运行成功
+        self.__running = False
         # 检查config.yml是否合法
         self.__check = False
         # http请求的地址
@@ -58,7 +60,12 @@ class Bot(Event):
             raise Exception('config.yml配置错误，请仔细检查')
 
         # 运行go-cqhttp
-        self.__run_go_cqhttp()
+        t = Thread(target=self.__run_go_cqhttp)
+        t.start()
+
+        # 等待go-cqhttp运行
+        while not self.__running:
+            time.sleep(1)
 
         # 初始化事件
         self.__init_events()
@@ -120,11 +127,11 @@ class Bot(Event):
             shell_msg = subp.stdout.readline().decode("utf-8").strip()
             if shell_msg.strip() == "":
                 continue
-
             print(shell_msg)
             if "CQ WebSocket 服务器已启动" in shell_msg:
                 time.sleep(1)
-                return
+                self.__running = True
+
 
     def __run_ws(self):
         """
@@ -197,6 +204,7 @@ class Bot(Event):
                 'on_meta_event_lifecycle': self.on_meta_event_lifecycle,
             },
         }
+        logging.info('事件初始化成功')
 
     def __call(self, message_data: dict[str, Any]):
         """
