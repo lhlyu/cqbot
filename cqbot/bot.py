@@ -18,7 +18,7 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 class Bot(Event):
-    version: str = '0.0.4'
+    version: str = '0.0.6'
 
     def __init__(self, loglevel: int = logging.INFO, path: str = './'):
         """
