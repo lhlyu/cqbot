@@ -2,11 +2,10 @@ import re
 from typing import Callable, List, Any
 from .action import Action
 from .event import EventMessage
+from .cq import CQ
 
 # def handler(act: Action, msg: EventMessage, args: List[Any]) -> bool
 CmdHandler = Callable[[Action, EventMessage, List[Any]], bool] | None
-
-rule = r'\[CQ:[\S ]+?\]'
 
 
 class Cmd:
@@ -64,7 +63,7 @@ class Cmd:
         if self.admins is not None and msg.user_id not in self.admins:
             return False
         # 将CQ码替换成空
-        prompt = re.sub(rule, ' ', msg.message).strip()
+        prompt = CQ.replace(msg.message, ' ').strip()
         # 根据空格切割参数
         args = re.split(r'\s+', prompt)
         if len(args) == 0:

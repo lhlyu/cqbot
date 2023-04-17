@@ -1,22 +1,36 @@
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Dict, Union
+import re
+
+rule = r'(\[CQ:\w+(?:,\w+\=\S+?)+\])'
 
 
-def escape(s, quote=True):
+def escape(s):
     """
     转义
     :param s:
     :param quote:
     :return:
     """
-    s = s.replace("&", "&amp;")  # Must be done first!
-    s = s.replace("<", "&lt;")
-    s = s.replace(">", "&gt;")
+
+    s = s.replace("&", "&amp;")
     s = s.replace("[", "&#91;")
     s = s.replace("]", "&#93;")
     s = s.replace(",", "&#44;")
-    if quote:
-        s = s.replace('"', "&quot;")
-        s = s.replace('\'', "&#x27;")
+    return s
+
+
+def unescape(s):
+    """
+    反转义
+    :param s:
+    :param quote:
+    :return:
+    """
+
+    s = s.replace("&amp;", "&")
+    s = s.replace("&#91;", "[")
+    s = s.replace("&#93;", "]")
+    s = s.replace("&#44;", ",")
     return s
 
 
@@ -358,6 +372,48 @@ class CQ:
             return ''
 
         return f'[CQ:tts,text={text}]'
+
+    @classmethod
+    def parse(cls, message: str, code: str = '') -> Dict[str, Dict[str, Union[int, str]]]:
+        """
+        解析消息里的CQ码
+
+        例子: [CQ:tts,text=message]xy[CQ:at,qq=123,name=jack]
+
+        返回: {'tts': {'text': 'message'}, 'at': {'qq': 123, 'name': 'jack'}}
+
+        :param code: 仅解析特定的cq码， 如: face
+        :param message:
+        :return:
+        """
+        cqs: Dict[str, Dict[str, Union[int, str]]] = {}
+        for item in re.findall(rule,  message):
+            group = str(item).lstrip('[').rstrip(']').split(',')
+            if len(group) == 0:
+                continue
+            name = group[0][3:]
+            if len(code) > 0 and name != code:
+                continue
+
+            fields: Dict[str, Union[int, str]] = {}
+            for v in group[1:]:
+                cols = v.split('=', 1)
+                if len(cols) != 2:
+                    continue
+                fields[cols[0]] = unescape(cols[1])
+            cqs[name] = fields
+
+        return cqs
+
+    @classmethod
+    def replace(cls, message: str, repl: str = '') -> str:
+        """
+        替换消息里的cq码
+        :param message:
+        :param repl:
+        :return:
+        """
+        return re.sub(rule, repl, message)
 
 
 __all__ = ['CQ']
